@@ -10,6 +10,15 @@ from aequitas.preprocessing import preprocess_input_df
 from aequitas.group import Group
 from aequitas.bias import Bias 
 
+# ModelOp Monitoring Libraries 
+import modelop.monitors.performance as performance
+import modelop.schema.infer as infer
+import modelop.utils as utils
+
+logger = utils.configure_logger()
+
+MONITORING_PARAMETERS = {}
+
 
 # modelop.init
 def begin():
@@ -46,61 +55,29 @@ def action(data):
 
 
 # modelop.metrics
-def metrics(data):
-    
-    data = pd.DataFrame(data)
+def metrics(dataframe):
 
-    # To measure Bias towards gender, filter DataFrame
-    # to "score", "label_value" (ground truth), and
-    # "gender" (protected attribute)
-    data_scored = data[["score", "label_value", "gender"]]
-
-    # Process DataFrame
-    data_scored_processed, _ = preprocess_input_df(data_scored)
-
-    # Group Metrics
-    g = Group()
-    xtab, _ = g.get_crosstabs(data_scored_processed)
-
-    # Absolute metrics, such as 'tpr', 'tnr','precision', etc.
-    absolute_metrics = g.list_absolute_metrics(xtab)
-
-    # DataFrame of calculated absolute metrics for each sample population group
-    absolute_metrics_df = xtab[
-        ['attribute_name', 'attribute_value'] + absolute_metrics].round(2)
-
-    # For example:
-    """
-        attribute_name  attribute_value     tpr     tnr  ... precision
-    0   gender          female              0.60    0.88 ... 0.75
-    1   gender          male                0.49    0.90 ... 0.64
-    """
-
-    # Bias Metrics
-    b = Bias()
-
-    # Disparities calculated in relation gender for "male" and "female"
-    bias_df = b.get_disparity_predefined_groups(
-        xtab,
-        original_df=data_scored_processed,
-        ref_groups_dict={'gender': 'male'},
-        alpha=0.05, mask_significance=True
+    # Initialize ModelEvaluator
+    model_evaluator = performance.ModelEvaluator(
+        dataframe=dataframe,
+        score_column=MONITORING_PARAMETERS["score_column"],
+        label_column=MONITORING_PARAMETERS["label_column"],
     )
 
-    # Disparity metrics added to bias DataFrame
-    calculated_disparities = b.list_disparities(bias_df)
+    # Compute classification metrics
+    classification_metrics = model_evaluator.evaluate_performance(
+        pre_defined_metrics="classification_metrics"
+    )
 
-    disparity_metrics_df = bias_df[
-        ['attribute_name', 'attribute_value'] + calculated_disparities]
-
-    # For example:
-    """
-        attribute_name	attribute_value    ppr_disparity   precision_disparity
-    0   gender          female             0.714286        1.41791
-    1   gender          male               1.000000        1.000000
-    """
-
-    output_metrics_df = disparity_metrics_df # or absolute_metrics_df
-
-    # Output a JSON object of calculated metrics
-    yield output_metrics_df.to_dict(orient="records")
+    result = {
+        # Top-level metrics
+        "accuracy": classification_metrics["values"]["accuracy"],
+        "precision": classification_metrics["values"]["precision"],
+        "recall": classification_metrics["values"]["recall"],
+        "auc": classification_metrics["values"]["auc"],
+        "f1_score": classification_metrics["values"]["f1_score"],
+        "confusion_matrix": classification_metrics["values"]["confusion_matrix"],
+        # Vanilla ModelEvaluator output
+        "performance": [classification_metrics],
+    }
+    yield result
