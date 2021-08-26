@@ -1,8 +1,6 @@
 # modelop.schema.0: input_schema.avsc
 # modelop.schema.1: output_schema.avsc
 
-# hello world
-
 import pandas as pd
 import pickle
 import numpy as np
