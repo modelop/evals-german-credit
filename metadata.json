@@ -1,0 +1,8 @@
+{
+    "tags": ["env-prod","jira"],
+    "name": "Metadata tester model",
+    "description": "test model",
+    "custom" : {
+        "Jira_ID":"test_proj"
+    }
+}
