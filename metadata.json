@@ -4,6 +4,7 @@
     "description": "test model",
     "custom" : {
         "Jira_ID":"test_proj",
-        "git_test": "New Value"
+        "git_test": "New Value",
+        "git_test_two": "New Value"
     }
 }
