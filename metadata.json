@@ -3,12 +3,6 @@
     "name": "German Credit Model - Implementation",
     "description": "test model",
     "custom" : {
-        "Jira_ID":"test_proj",
-        "git_test": "New Value",
-        "git_test_two": "New Value",
-        "git_test_three": "New Value",
-        "git_test_four": "New Value",
-        "git_test_five": "New Value",
-        "git_test_six": "New Value"
+        "Jira_ID":"test_proj"
     }
 }
